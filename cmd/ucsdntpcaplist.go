@@ -1,13 +1,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/CAIDA/goucsdnt"
 )
 
 func main() {
-	b := goucsdnt.NewUCSDNTBucket()
+	ctx := context.Background()
+	b := goucsdnt.NewUCSDNTBucket(ctx)
 	keys, err := b.ListObjects()
 	if err != nil {
 		panic(err)
