@@ -62,8 +62,9 @@ func main() {
 	for sts := startts; sts.Before(endts); sts = sts.Add(time.Hour) {
 		log.Println("Processing", sts.String())
 		workerchan <- 1
+		wgglob.Add(1)
 		go func(ts time.Time) {
-			wgglob.Add(1)
+
 			LoadPcap(client, ts, cntmax, outputdir)
 			wgglob.Done()
 			<-workerchan
