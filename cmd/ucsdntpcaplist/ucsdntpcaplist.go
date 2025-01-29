@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/CAIDA/goucsdnt"
 )
@@ -10,9 +11,12 @@ import (
 func main() {
 	ctx := context.Background()
 	b := goucsdnt.NewUCSDNTBucket(ctx)
+	if b == nil {
+		log.Println("NewUCSDNTBucket failed")
+	}
 	keys, err := b.ListObjects()
 	if err != nil {
-		panic(err)
+		log.Panic(err)
 	}
 	for _, key := range keys {
 		fmt.Println(key)
