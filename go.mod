@@ -3,7 +3,6 @@ module github.com/CAIDA/goucsdnt
 go 1.21.1
 
 require (
-	github.com/CAIDA/goucsdnt v0.0.0-20250125000549-157204e2e4b3
 	github.com/aws/aws-sdk-go-v2 v1.34.0
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.55
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.74.1
