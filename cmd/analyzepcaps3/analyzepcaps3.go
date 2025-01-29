@@ -42,6 +42,9 @@ func main() {
 	flag.Parse()
 	ctx := context.Background()
 	client := goucsdnt.NewUCSDNTBucket(ctx)
+	if client == nil {
+		log.Fatalln("NewUCSDNTBucket failed")
+	}
 	// fix the date for demo purpose
 	if starttime != "" {
 		startts, _ = time.Parse(time.RFC3339, starttime)

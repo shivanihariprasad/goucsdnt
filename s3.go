@@ -51,11 +51,8 @@ func (*staticResolver) ResolveEndpoint(ctx context.Context, params s3.EndpointPa
 
 func NewUCSDNTBucket(ctx context.Context) *UCSDNTBucket {
 	//read the key and secret from the environment
-	fmt.Println("NewUCSDNTBucket")
 	UCSD_NT_S3_ACCESS_KEY := os.Getenv("UCSD_NT_S3_ACCESS_KEY")
 	UCSD_NT_S3_SECRET_KEY := os.Getenv("UCSD_NT_S3_SECRET_KEY")
-	fmt.Println("UCSD_NT_S3_ACCESS_KEY:", UCSD_NT_S3_ACCESS_KEY)
-	fmt.Println("UCSD_NT_S3_SECRET_KEY:", UCSD_NT_S3_SECRET_KEY)
 	if UCSD_NT_S3_ACCESS_KEY == "" || UCSD_NT_S3_SECRET_KEY == "" {
 		log.Fatal("UCSD_NT_S3_ACCESS_KEY and UCSD_NT_S3_SECRET_KEY must be set in the environment.")
 	}
