@@ -1,4 +1,4 @@
-module goucsdnt
+module github.com/CAIDA/goucsdnt
 
 go 1.21.1
 
@@ -24,4 +24,4 @@ require (
 	golang.org/x/sys v0.0.0-20190412213103-97732733099d // indirect
 )
 
-replace github.com/CAIDA/goucsdnt => ../goucsdnt
+//replace github.com/CAIDA/goucsdnt => ../goucsdnt
