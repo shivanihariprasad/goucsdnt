@@ -43,7 +43,7 @@ func (*staticResolver) ResolveEndpoint(ctx context.Context, params s3.EndpointPa
 		}, nil
 	}*/
 	// s3.Options.BaseEndpoint is accessible here:
-	fmt.Printf("The endpoint provided in config is %s\n", *params.Endpoint)
+	//fmt.Printf("The endpoint provided in config is %s\n", *params.Endpoint)
 
 	//default
 	return s3.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
@@ -53,8 +53,9 @@ func NewUCSDNTBucket(ctx context.Context) *UCSDNTBucket {
 	//read the key and secret from the environment
 	UCSD_NT_S3_ACCESS_KEY := os.Getenv("UCSD_NT_S3_ACCESS_KEY")
 	UCSD_NT_S3_SECRET_KEY := os.Getenv("UCSD_NT_S3_SECRET_KEY")
-	fmt.Println("Access key:", UCSD_NT_S3_ACCESS_KEY)
-	fmt.Println("Secret key:", UCSD_NT_S3_SECRET_KEY)
+	if UCSD_NT_S3_ACCESS_KEY == "" || UCSD_NT_S3_SECRET_KEY == "" {
+		log.Fatal("UCSD_NT_S3_ACCESS_KEY and UCSD_NT_S3_SECRET_KEY must be set in the environment.")
+	}
 	/*tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
@@ -63,12 +64,11 @@ func NewUCSDNTBucket(ctx context.Context) *UCSDNTBucket {
 		BaseEndpoint:       aws.String(UCSDNT_S3_ENDPOINT),
 		EndpointResolverV2: &staticResolver{},
 		Credentials:        aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(UCSD_NT_S3_ACCESS_KEY, UCSD_NT_S3_SECRET_KEY, "")),
-		Region:             "auto",
+		Region:             "us-east-1",
 		UsePathStyle:       true,
 		//ClientLogMode:      aws.LogRetries | aws.LogRequest | aws.LogResponse,
 		//HTTPClient:         hclient,
 	})
-	fmt.Println("Client created", client)
 	return &UCSDNTBucket{
 		S3Client: client,
 		Ctx:      ctx,
@@ -78,8 +78,8 @@ func NewUCSDNTBucket(ctx context.Context) *UCSDNTBucket {
 func (b *UCSDNTBucket) ListObjects() ([]string, error) {
 	var keys []string
 	paginator := s3.NewListObjectsV2Paginator(b.S3Client, &s3.ListObjectsV2Input{
-		//Bucket: aws.String(UCSDNT_S3_PCAPLIVE),
-		Bucket: aws.String(UCSDNT_S3_FT),
+		Bucket: aws.String(UCSDNT_S3_PCAPLIVE),
+		//Bucket: aws.String(UCSDNT_S3_FT),
 	})
 	for paginator.HasMorePages() {
 		page, err := paginator.NextPage(b.Ctx)
@@ -93,9 +93,10 @@ func (b *UCSDNTBucket) ListObjects() ([]string, error) {
 	return keys, nil
 }
 
-func (b *UCSDNTBucket) GetObjectByDatetime(d time.Time) (io.Reader, error) {
+func (b *UCSDNTBucket) GetObjectByDatetime(d time.Time) (string, io.Reader, error) {
 	objpath := d.Format("datasource=ucsd-nt/year=2006/month=01/day=02/hour=15/")
-	pcapname := fmt.Sprintf("ucsd-nt.%d.pcap.gz", d.Unix())
+	dhour := d.Truncate(1 * time.Hour)
+	pcapname := fmt.Sprintf("ucsd-nt.%d.pcap.gz", dhour.Unix())
 
 	input := &s3.GetObjectInput{
 		Bucket: aws.String(UCSDNT_S3_PCAPLIVE),
@@ -111,7 +112,7 @@ func (b *UCSDNTBucket) GetObjectByDatetime(d time.Time) (io.Reader, error) {
 		} else {
 			log.Printf("Couldn't get object %v. Here's why: %v\n", *input.Bucket, err)
 		}
-		return nil, err
+		return "", nil, err
 	}
-	return result.Body, nil
+	return pcapname, result.Body, nil
 }
