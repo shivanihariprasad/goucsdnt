@@ -97,10 +97,13 @@ func (b *UCSDNTBucket) GetObjectByDatetime(d time.Time) (string, io.Reader, erro
 	objpath := d.Format("datasource=ucsd-nt/year=2006/month=01/day=02/hour=15/")
 	dhour := d.Truncate(1 * time.Hour)
 	pcapname := fmt.Sprintf("ucsd-nt.%d.pcap.gz", dhour.Unix())
+	return b.GetObjectByPath(filepath.Join(objpath, pcapname))
+}
 
+func (b *UCSDNTBucket) GetObjectByPath(f string) (string, io.Reader, error) {
 	input := &s3.GetObjectInput{
 		Bucket: aws.String(UCSDNT_S3_PCAPLIVE),
-		Key:    aws.String(filepath.Join(objpath, pcapname)),
+		Key:    aws.String(f),
 	}
 	result, err := b.S3Client.GetObject(b.Ctx, input)
 
@@ -114,5 +117,5 @@ func (b *UCSDNTBucket) GetObjectByDatetime(d time.Time) (string, io.Reader, erro
 		}
 		return "", nil, err
 	}
-	return pcapname, result.Body, nil
+	return filepath.Base(f), result.Body, nil
 }

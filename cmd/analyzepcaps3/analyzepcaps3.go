@@ -29,7 +29,7 @@ type MiraiCount struct {
 }
 
 func main() {
-	var outputdir, starttime, endtime string
+	var outputdir, starttime, endtime, pfile string
 	var startts, endts time.Time
 	var cntmax int64
 	var workers int
@@ -37,6 +37,7 @@ func main() {
 	flag.StringVar(&starttime, "s", "2025-01-25T00:00:00Z", "Start time")
 	flag.StringVar(&endtime, "e", "2025-01-25T00:59:59Z", "End time")
 	flag.StringVar(&outputdir, "o", "./output", "Output dir path")
+	flag.StringVar(&pfile, "f", "", "S3 path to pcap file")
 	flag.Int64Var(&cntmax, "c", -1, "Packet count")
 	flag.IntVar(&workers, "w", 1, "Number of workers")
 	flag.Parse()
@@ -45,40 +46,46 @@ func main() {
 	if client == nil {
 		log.Fatalln("NewUCSDNTBucket failed")
 	}
-	// fix the date for demo purpose
-	if starttime != "" {
-		startts, _ = time.Parse(time.RFC3339, starttime)
-	} else {
-		startts = time.Date(2025, time.January, 25, 0, 0, 0, 0, time.UTC)
-	}
-	if endtime != "" {
-		endts, _ = time.Parse(time.RFC3339, endtime)
-	} else {
-		endts = time.Date(2025, time.January, 25, 0, 59, 59, 0, time.UTC)
-	}
-	//create output dir, if not exist
-	if _, err := os.Stat(outputdir); os.IsNotExist(err) {
-		os.Mkdir(outputdir, 0755)
-	}
-	workerchan := make(chan int, workers)
+	if pfile == "" {
+		// fix the date for demo purpose
+		if starttime != "" {
+			startts, _ = time.Parse(time.RFC3339, starttime)
+		} else {
+			startts = time.Date(2025, time.January, 25, 0, 0, 0, 0, time.UTC)
+		}
+		if endtime != "" {
+			endts, _ = time.Parse(time.RFC3339, endtime)
+		} else {
+			endts = time.Date(2025, time.January, 25, 0, 59, 59, 0, time.UTC)
+		}
+		//create output dir, if not exist
+		if _, err := os.Stat(outputdir); os.IsNotExist(err) {
+			os.Mkdir(outputdir, 0755)
+		}
+		workerchan := make(chan int, workers)
 
-	for sts := startts; sts.Before(endts); sts = sts.Add(time.Hour) {
-		log.Println("Processing", sts.String())
-		workerchan <- 1
-		wgglob.Add(1)
-		go func(ts time.Time) {
-
-			LoadPcap(client, ts, cntmax, outputdir)
-			wgglob.Done()
-			<-workerchan
-		}(sts)
+		for sts := startts; sts.Before(endts); sts = sts.Add(time.Hour) {
+			log.Println("Processing", sts.String())
+			workerchan <- 1
+			wgglob.Add(1)
+			go func(ts time.Time) {
+				LoadPcap(client, ts, "", cntmax, outputdir)
+				wgglob.Done()
+				<-workerchan
+			}(sts)
+		}
+		wgglob.Wait()
+	} else {
+		LoadPcap(client, time.Time{}, pfile, cntmax, outputdir)
 	}
-	wgglob.Wait()
 	log.Println("Done")
 }
 
-func LoadPcap(client *goucsdnt.UCSDNTBucket, curday time.Time, cntmax int64, outputdir string) {
+func LoadPcap(client *goucsdnt.UCSDNTBucket, curday time.Time, pfile string, cntmax int64, outputdir string) {
 	var pckcnt int64
+	var pcapname string
+	var pcapio io.Reader
+	var err error
 	log.Println("Loading pcap for", curday.Unix())
 	mairamap := &MiraiCount{}
 	mairamap.Mmap = make(MiraiMap)
@@ -86,7 +93,13 @@ func LoadPcap(client *goucsdnt.UCSDNTBucket, curday time.Time, cntmax int64, out
 	go SumMaira(mairamap)
 	mairamap.Wg.Add(1)
 	pckcnt = 0
-	pcapname, pcapio, err := client.GetObjectByDatetime(curday)
+
+	if pfile != "" {
+		pcapname, pcapio, err = client.GetObjectByPath(pfile)
+	} else {
+		pcapname, pcapio, err = client.GetObjectByDatetime(curday)
+	}
+
 	if err == nil {
 		gzipReader, err := gzip.NewReader(pcapio)
 		if err != nil {
