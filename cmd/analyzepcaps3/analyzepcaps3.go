@@ -86,7 +86,7 @@ func LoadPcap(client *goucsdnt.UCSDNTBucket, curday time.Time, pfile string, cnt
 	var pcapname string
 	var pcapio io.Reader
 	var err error
-	log.Println("Loading pcap for", curday.Unix())
+
 	mairamap := &MiraiCount{}
 	mairamap.Mmap = make(MiraiMap)
 	mairamap.Mchan = make(chan netip.Addr)
@@ -95,8 +95,10 @@ func LoadPcap(client *goucsdnt.UCSDNTBucket, curday time.Time, pfile string, cnt
 	pckcnt = 0
 
 	if pfile != "" {
+		log.Println("Loading pcap for", pfile)
 		pcapname, pcapio, err = client.GetObjectByPath(pfile)
 	} else {
+		log.Println("Loading pcap for", curday.Unix())
 		pcapname, pcapio, err = client.GetObjectByDatetime(curday)
 	}
 
