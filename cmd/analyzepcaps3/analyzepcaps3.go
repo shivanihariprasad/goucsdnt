@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/CAIDA/goucsdnt"
+	"github.com/shivanihariprasad/goucsdnt"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcapgo"

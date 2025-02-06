@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/CAIDA/goucsdnt"
+	"github.com/shivanihariprasad/goucsdnt"
 )
 
 func main() {
