@@ -22,3 +22,5 @@ require (
 	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 )
+
+replace github.com/CAIDA/goucsdnt => github.com/shivanihariprasad/goucsdnt v0.0.0-20250203213847-24f4745cded4
